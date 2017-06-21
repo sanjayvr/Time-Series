@@ -43,14 +43,14 @@ Example -
 
 **Supervised Learning Data**
 
-+ I/P   O/P
-+  x    100
-+  100  110
-+  110  120
-+  120   y(to be predicted)
+|  I/P | O/P  |
+|:----:|:----:|
+|  x   | 100  |
+| 100  | 110  |
+| 110  | 120  |
+| 120  |  y   |
 
-
-
+*y - The value that needs to be forecasted
 
 
 
