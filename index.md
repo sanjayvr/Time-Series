@@ -137,8 +137,37 @@ Example -
 
 ```python
 from pandas import Series
-data = Series.from_csv('xyz.csv', header = 0)
+
+data = Series.from_csv('xyz.csv', header = 0, parse_dates=[0], index_col=0)
+df = Series.to_frame(data)
 ```
+
+Useful Functions -
++ .head(n), .tail(n) - Peak the first and last n records in the series
++ .size() - Size of the series
++ .describe() - Gives Count, Mean, Standard Deviation, Median, Minimum, Maximum of the series
+
+### Plotting Time Series
+
+**Line Plot with Dotted Style**
+
+```python
+import matplotlib
+matplotlib.use('agg',warn=False,force=True) # Used to save plot on headless linux distros
+from matplotlib import pyplot
+
+pyplot.plot(data,'--') # '--' is used to style the plot to dotted line
+pyplot.show()
+pyplot.save('Figure_Name')
+```
+
+**Histogram**
+
+```python
+pyplot.hist(data)
+```
+
+
 
 
 
