@@ -37,24 +37,14 @@ In order to convert time series data to supervised learning data we could change
 Example -
 
 
-**Time Series Data**
+**Time Series Data**                **Supervised Learning Data**
 
-| Time | O/P  |
-|:----:|:----:|
-|  01  | 100  |
-|  02  | 110  |
-|  03  | 120  |
-
-
-**Supervised Learning Data**
-
-|  X1  | Y1   |
-|:----:|:----:|
-|  x   | 100  |
-| 100  | 110  |
-| 110  | 120  |
-| 120  |  y   |
-
+| Time | O/P  |                         |  X1  | Y1   |
+|:----:|:----:|                         |:----:|:----:|
+|  01  | 100  |                         |  x   | 100  |
+|  02  | 110  |                         | 100  | 110  |
+|  03  | 120  |                         | 110  | 120  |
+                                        | 120  |  y   |
 
 *x - The input value that has to be taken from previous output*
 *y - The value that needs to be forecasted*
@@ -156,7 +146,8 @@ import matplotlib
 matplotlib.use('agg',warn=False,force=True) # Used to save plot on headless linux distros
 from matplotlib import pyplot
 
-pyplot.plot(data,'--') # '--' is used to style the plot to dotted line
+# '--' used to change line style to dashes
+pyplot.plot(data,'--')
 pyplot.show()
 pyplot.save('Figure_Name')
 ```
@@ -168,6 +159,6 @@ pyplot.hist(data)
 ```
 
 
-
+### Persistence Forecast Model
 
 
