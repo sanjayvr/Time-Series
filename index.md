@@ -32,14 +32,17 @@ Supervised learning is a branch of Machine Learning that deals with training mac
 ### Converting Time Series Data to Supervised Learning Data
 In order to achieve this we could change the output of observation 1 to input of observation 2 and output of observation 2 to input of observation 3 and so on.
 Example -
+
 **Time Series Data**
+
 | Time | O/P  |
-|------|------|
+|:----:|:----:|
 |  01  | 100  |
 |  02  | 110  |
 |  03  | 120  |
 
 **Supervised Learning Data**
+
 + I/P   O/P
 +  x    100
 +  100  110
