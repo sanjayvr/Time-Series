@@ -21,6 +21,8 @@ Forecasting involves taking models fit on historical data and then predicting fu
 + Identify the outlier values and missing gaps in order to improve the model
 
 
+---------------------------------------------------------------------------------------------------------------------------------------
+
 # Time Series Forecasting as Supervised Learning
 *Time Series Forecasting problem can be transformed into supervised machine learning problem in order to test different standard algorithms on the dataset.*
 
@@ -29,8 +31,9 @@ Supervised learning is a branch of Machine Learning that deals with training mac
 + Classification Problem - Classify the given input to a certain output label
 + Regression Problem - Calculate output which is a real value based on the given data. 
 
-### Converting Time Series Data to Supervised Learning Data
-In order to achieve this we could change the output of observation 1 to input of observation 2 and output of observation 2 to input of observation 3 and so on.
+### Sliding Window Method
+In order to convert time series data to supervised learning data we could change the output of observation 1 to input of observation 2 and output of observation 2 to input of observation 3 and so on.
+
 Example -
 
 
@@ -45,15 +48,97 @@ Example -
 
 **Supervised Learning Data**
 
-|  I/P | O/P  |
+|  X1  | Y1   |
 |:----:|:----:|
 |  x   | 100  |
 | 100  | 110  |
 | 110  | 120  |
 | 120  |  y   |
 
+
+*x - The input value that has to be taken from previous output*
 *y - The value that needs to be forecasted*
 
+
+The intial row can be deleted as we don't have a prior observation. THe use of prior time outputs for next observation is called sliding window method and in statistics is called lag method. The number of previous time steps is called window width or lag size.
+
+### Sliding Method with Multivariate Time Series Data
+Univariate time series are dataset with single variable and multivariate time series datasets are datasets with two or more variables.
+
+Example -
+
+
+**Time Series Data**
+
+| Time | Measure 1 | Measure 2 |
+|:----:|:---------:|:---------:|
+|  01  | 100       |  1        |
+|  02  | 110       |  2        |
+|  03  | 120       |  3        |
+
+
+**Supervised Learning Data**
+
+
+| X1  | X2  | X3  |  Y  |
+|:---:|:---:|:---:|:---:|
+| ?   | ?   | 100 |  1  |
+| 100 | 1   | 110 |  2  |
+| 110 | 2   | 120 |  3  |
+| 120 | 3   |  ?  |  ?  |
+
+
+The rows with unknown values can be removed and Y is the to be predicted column but in case we need to predict two different values then the following can be done
+
+
+| X1  | X2  | Y1  |  Y2 |
+|:---:|:---:|:---:|:---:|
+| ?   | ?   | 100 |  1  |
+| 100 | 1   | 110 |  2  |
+| 110 | 2   | 120 |  3  |
+| 120 | 3   |  ?  |  ?  |
+
+
+Not many methods can handle prediction of multiple output values so need to choose suitable methods for the work.
+
+
+### Sliding Window with Multi-Step Forecasting
+Forecasting can either be one step or multi step i.e, prediction of either next time step or multiple future time steps.
+
+Example -
+
+
+**Time Series Data**
+
+| Time | O/P  |
+|:----:|:----:|
+|  01  | 100  |
+|  02  | 110  |
+|  03  | 120  |
+
+
+**Supervised Learning Data**
+
+|  X1  | Y1   | Y2   |
+|:----:|:----:|:----:|
+|  x   | 100  | 110  |
+| 100  | 110  | 120  |
+| 110  | 120  |  ?   |
+| 120  |  ?   |  ?   |
+
+*We just use the first row to train the model and then predict both y1 and y2 values.*
+
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+# Time Series Forecasting with Python
+
+### Load Time Series Data
+
+```python
+from pandas import Series
+data = Series.from_csv('xyz.csv', header = 0)
+```
 
 
 
