@@ -168,6 +168,10 @@ pyplot.hist(data)
 ```
 
 
+### Establishing Baselines using Persistence Algorithm
+A baseline in performance gives us an idea how other models are performing on our problem and before establishing baseline we need to
+decide on the dataset split and performance measure.
+
 
 
 
