@@ -219,7 +219,7 @@ def zero_rule_regression(train, test):
 ```
 
 
-**Persistence ALgorithm**
+**Persistence Algorithm**
 This is also called naive forecast. A persistence model can be implemented by -
 
 1. Transform univariate dataset into supervised learning problem
@@ -231,7 +231,6 @@ values = DataFrame(data.values) # converting the data to dataframe
 dataframe = concat([values.shift(1), values], axis=1) # creating Dataframe with Current Output and Previous Output
 dataframe.columns = ['t-1', 't+1'] #setting column names
 ```
-
 
 2. Split the dataset to train and test datasets.
 ```python
@@ -268,4 +267,8 @@ pyplot.plot([None for i in train_y] + [x for x in predictions])
 pyplot.show()
 ```
 
+*Root Mean Squared Error(RMSE)*
+```python
+rmse = sqrt(test_score)
+```
 
