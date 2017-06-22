@@ -172,7 +172,7 @@ pyplot.hist(data)
 A baseline in performance gives us an idea how other models are performing on our problem and before establishing baseline we need to
 decide on the dataset split and performance measure. We can use Random Prediction algorithm or Zero Rule algorithm to form a baseline.
 
-**Random Prediction Algorith**
+**Random Prediction Algorithm**
 In this the prediction is just a random outcome from the training data and we always set a random number seed to make sure we always get same decidions everytime we run the algorithm. The algorithm takes all the unique output values of training dataset and randomly gives a value to the test dataset.
 
 ```python
@@ -196,7 +196,7 @@ print (predictions)
 ```
 
 
-**Zero Rule Algorith**
+**Zero Rule Algorithm**
 In a classification problem for this algorithm we just assign the label with highest occurence to every instance in dataset.
 
 ```python
@@ -272,3 +272,12 @@ pyplot.show()
 rmse = sqrt(test_score)
 ```
 
+### Autoregression
+A regression model works on a model like y = b0 + b1 * x where y is the prediction, b0 and b1 are optimizing coefficients and x is input value. 
+
+
+In time series, the previous time step output is used as input for the next observation and is called lag variable.
+*x(t+1) = b0 + b1 * x(t-1) + b2 * x(t-2)*
+
+
+An autoregression model assumes the observations at previous step are useful in prediction of the next time step and this is called correlation. If both are in same direction then it is positive correlation and if not negtive correlation.
