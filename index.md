@@ -137,9 +137,9 @@ Example -
 
 ```python
 from pandas import Series
-
+from pandas import DataFrame
 data = Series.from_csv('xyz.csv', header = 0, parse_dates=[0], index_col=0)
-df = Series.to_frame(data)
+values = DataFrame(data.values)
 ```
 
 Useful Functions -
@@ -153,7 +153,7 @@ Useful Functions -
 
 ```python
 import matplotlib
-matplotlib.use('agg',warn=False,force=True) # Used to save plot on headless linux distros
+matplotlib.use('agg',warn=False,force=True) # used to save plot on headless linux distros
 from matplotlib import pyplot
 
 pyplot.plot(data,'--') # '--' is used to style the plot to dotted line
@@ -180,12 +180,12 @@ from random import seed
 from random import randrange
 
 def random_prediction(train, test):
-    output_values = [row[-1] for row in train] # Storing all the train output values from the last column
+    output_values = [row[-1] for row in train] # storing all the train output values from the last column
     unique_output = list(set(output_values)
     predicted = []
     for row in test:
       rand_index = randrange(len(unique)) # chosing random index number
-      predicted.append(unique[index]) # Assigning the output value at the random index number
+      predicted.append(unique[index]) # assigning the output value at the random index number
     return predicted
     
 seed(1)
@@ -194,6 +194,7 @@ test = [[None], [None], [None]]
 predictions = random_prediction(train,test)
 print (predictions)
 ```
+
 
 **Zero Rule Algorith**
 In a classification problem for this algorithm we just assign the label with highest occurence to every instance in dataset.
@@ -206,6 +207,7 @@ def zero_rule_classification(train, test):
     return predicted
 ```
 
+
 In a Regression problem we just use the mean of the output value observed in the training data.
 
 ```python
@@ -217,15 +219,53 @@ def zero_rule_regression(train, test):
 ```
 
 
+**Persistence ALgorithm**
+This is also called naive forecast. A persistence model can be implemented by -
+
+1. Transform univariate dataset into supervised learning problem
+```python
+from pandas import concat
+from pandas import DataFrame
+
+values = DataFrame(data.values) # converting the data to dataframe
+dataframe = concat([values.shift(1), values], axis=1) # creating Dataframe with Current Output and Previous Output
+dataframe.columns = ['t-1', 't+1'] #setting column names
+```
 
 
+2. Split the dataset to train and test datasets.
+```python
+total_data = dataframe.values
+train_size = int(len(total_data) * 0.66)
+train, test = total_data[1:train_size], total_data[train_size:] # splitting Dataset to 66/34 % for train and test
+train_x, train_y = train[:,0], train[:,1] # splitting train data based on columns t-1 and t+1
+test_x, test_y = test[:,0], test[:,1] #splitting test data based on columns t-1 and t+1
+```
 
+3. Define the persistence model.
+In this model we just return the input value as the prediction. So if we provide t-1 value to predict t+1 the value will be shown for t-1 value. Although it is not the right value we use this model for our baseline performance.
+```python
+def persistence_model(x):
+    return x
+```
 
+4. Establish a baseline performance
+```python
+from sklearn.metrics import mean_squared_error
+predictions = []
+for i in test_x
+    yhat = persistence_model(i)
+    predictions.append(yhat)
+test_score = mean_squared_error(test_y, predictions)
+print('Test MSE: %.3f' % test_score)
+```
 
-
-
-
-
-
+5. Review proble and plot the output
+```python
+pyplot.plot(train_y)
+pyplot.plot([None for i in train_y] + [x for x in test_y])
+pyplot.plot([None for i in train_y] + [x for x in predictions])
+pyplot.show()
+```
 
 
