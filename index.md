@@ -170,7 +170,61 @@ pyplot.hist(data)
 
 ### Establishing Baselines using Persistence Algorithm
 A baseline in performance gives us an idea how other models are performing on our problem and before establishing baseline we need to
-decide on the dataset split and performance measure.
+decide on the dataset split and performance measure. We can use Random Prediction algorithm or Zero Rule algorithm to form a baseline.
+
+**Random Prediction Algorith**
+In this the prediction is just a random outcome from the training data and we always set a random number seed to make sure we always get same decidions everytime we run the algorithm. The algorithm takes all the unique output values of training dataset and randomly gives a value to the test dataset.
+
+```python
+from random import seed
+from random import randrange
+
+def random_prediction(train, test):
+    output_values = [row[-1] for row in train] # Storing all the train output values from the last column
+    unique_output = list(set(output_values)
+    predicted = []
+    for row in test:
+      rand_index = randrange(len(unique)) # chosing random index number
+      predicted.append(unique[index]) # Assigning the output value at the random index number
+    return predicted
+    
+seed(1)
+train = [[0], [1], [1], [0]]
+test = [[None], [None], [None]]
+predictions = random_prediction(train,test)
+print (predictions)
+```
+
+**Zero Rule Algorith**
+In a classification problem for this algorithm we just assign the label with highest occurence to every instance in dataset.
+
+```python
+def zero_rule_classification(train, test):
+    output_values = [row[-1] for row in train]
+    prediction = max(set(output_values), key=output_values.count)
+    predicted = [prediction for i in range(len(test))]
+    return predicted
+```
+
+In a Regression problem we just use the mean of the output value observed in the training data.
+
+```python
+def zero_rule_regression(train, test):
+    output_values = [rpw[-1] for row in train]
+    prediction = sum(output_values) / float(len(output_values))
+    predicted = [prediction for i in range(len(test))]
+    return predicted
+```
+
+
+
+
+
+
+
+
+
+
 
 
 
