@@ -7,10 +7,12 @@ matplotlib.use('agg',warn=False,force=True)
 from matplotlib import pyplot
 from pandas import concat
 from pandas import DataFrame
+from pandas import read_csv
 from pandas.plotting import lag_plot
 from pandas.plotting import autocorrelation_plot
 from sklearn.metrics import mean_squared_error
 from statsmodels.tsa.ar_model import AR
+from statsmodels.tsa.arima_model import ARIMA
 
 
 def load(data_file):
@@ -23,7 +25,7 @@ def load(data_file):
 	'''
 
 	# loading data into a series
-	data = Series.from_csv(data_file,header=0,parse_dates=[0],index_col=0)
+	data = read_csv(data_file,header=0,parse_dates=[0],index_col=0)
 
 	# converting series to a data frame
 	values = DataFrame(data.values)
@@ -202,7 +204,60 @@ def autoregression_retrain(dataseries):
 	pyplot.savefig('AR-Retrain Plot')
 
 
+def arima_model(data_series, data_frame):
+
+	'''
+	df: values from data
+	train: training dataset
+	test: testing dataset
+	predictions: predicted values
+	model: Creating model for ARIMA
+	model_fit: Model fit on train data
+	:return: RMSE and ARIMA Plot
+	'''
+
+	# fit model using (p, d, q) paramters set for running the ARIMA model
+	df = data_series.values
+	size = len(df)
+	train = df[1:size-10]
+	test = df[size-10:]
+	history = [x for x in train]
+	predictions = []
+	for t in range(len(test)):
+		model = ARIMA(history, order=(5,1,0))
+		model_fit = model.fit(disp=0)
+		output = model_fit.forecast()
+		yhat = output[0]
+		predictions.append(yhat)
+		obs = test[t]
+		history.append(obs)
+		# print(model_fit.summary())
+		print('predicted=%f, expected=%f' % (yhat,obs))
+	error = mean_squared_error(test, predictions)
+	rmse = math.sqrt(error)
+	print('Test RMSE: %.3f' % rmse)
+
+	# plot residual errors
+	'''
+	residuals = DataFrame(model_fit.resid)
+	residuals.plot()
+	pyplot.show()
+	pyplot.savefig('Fit Plot 1')
+	residuals.plot(kind='kde')
+	pyplot.show()
+	pyplot.savefig('Fit Plot 2')
+	print(residuals.describe())
+	'''
+
+	# plot
+	pyplot.plot(test)
+	pyplot.plot(predictions, 'r--')
+	pyplot.show()
+	pyplot.savefig('ARIMA Plot')
+
+
 def plot(data_series):
+
 
 	'''
 	This function is used to plot the dataset in different styles
@@ -245,12 +300,12 @@ def main():
 	data_file = raw_input('Please enter the file name: ')
 	data_series, data_frame = load(data_file)
 	# plot(data_series)
-	# train_x, train_y, test_x, test_y, dataframe, train, test = to_supervised(data_series, data_frame)
+	train_x, train_y, test_x, test_y, dataframe, train, test = to_supervised(data_series, data_frame)
 	# persistence_forecast(train_x, train_y, test_x, test_y)
 	# autocorrelation_check(data_series, dataframe)
 	# autoregression_autotrain(data_series)
 	# autoregression_retrain(data_series)
-
+	arima_model(data_series, data_frame)
 	print('--Process Completed--')
 
 if __name__ == '__main__':
