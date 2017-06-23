@@ -277,7 +277,106 @@ A regression model works on a model like y = b0 + b1 * x where y is the predicti
 
 
 In time series, the previous time step output is used as input for the next observation and is called lag variable.
+
 *x(t+1) = b0 + b1 * x(t-1) + b2 * x(t-2)*
 
 
 An autoregression model assumes the observations at previous step are useful in prediction of the next time step and this is called correlation. If both are in same direction then it is positive correlation and if not negtive correlation.
+
+
+One quick way to check for autocorrelation in the given dataset is by plotting lag plot 
+```python
+from pandas.tools.plotting import lag_plot
+lag_plot(data_series)
+```
+
+
+Another quick way is to directly calculate the correlation between the observation and the lag variable using Pearson correlation coefficient. The correlation between two variables is shown with values between -1(negative correlation) to 1(positive correlation) and small values closer to zero indicate low correlation and high values above 0.5 or below -0.5 indicate high correlation.
+
+```python
+# taking the dataframe created with the lag variables
+result = dataframe.corr()
+print(result)
+```
+
+
+The more advanced way of checking the above is by using an autocorrelation plot
+
+```python
+from pandas.tools.plotting import autocorrelation_plot
+autocorrelation_plot(data_series)
+```
+
+
+**AR Model using statsmodels**
+```python
+from statsmodels.tsa.ar_model import AR
+
+data_values = data_series.values
+train, test = data_values[1:len(data_values)-10], data_values[len(data_values)-10:] #testing only 10 observations
+
+# train AR model
+model = AR(train)
+model_fit = model.fit()
+print('Lag: %s' % model_fit.k_ar) # printing the chosen optimal lag
+print('Coefficients: %s' % model_fit.params) # list of coefficients in the trained model
+
+# test/forecast
+predictions = model_fit.predict(start=len(train), end=len(train)+len(test)-1, dynamic = False)
+for i in range(len(predictions)):
+    print('predicted=%f, expected=%f' % (predictions[i], test[i]))
+
+error = mean_squared_error(test, predictions)
+print('Test MSE: %.3f' % error)
+
+#plot
+pyplot.plot(test)
+pyplot.plot(predictions, 'r--')
+pyplot.show()
+```
+
+*The main drawback of the above model is that for every new observation we have to re-train the model which is not the most optimal way so instead we can create a history from the initial test and use those in the regression equation to come up with new forecasts.*
+
+yhat = b0 + b1 * x1 + b2 * x2 + ... + bn * xn
+
+```python
+# train AR Model
+model = AR(train)
+model_fit = model.fit()
+window = model_fit.k_ar
+coef = model_fit.params
+
+# utilizing previously trained model
+history = train[len(train)-window:]
+history = [history[i] for i in range(len(history))]
+
+# predictions
+predictions = list()
+for t in range(len(test)):
+    length = len(history)
+    lag = [history[i] for i in range(length-window,length)]
+    yhat = coef[0]
+    for d in range(window):
+        yhat += coef[d+1] * lag[window-d-1]
+    obs = test[t]
+    predictions.append(yhat)
+    history.append(obs)
+    print('predicted=%f, expected=%f' % (yhat,obs))
+
+# RMSE
+error = mean_squared_error(test, predictions)
+rmse = math.sqrt(error)
+print('Test RMSE: %.3f' % rmse)
+
+#plot
+pyplot.plot(test)
+pyplot.plot(predictions, 'r--')
+pyplot.show()
+pyplot.savefig('AR-AutoTrain Plot')
+```
+
+
+
+
+
+
