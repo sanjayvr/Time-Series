@@ -272,7 +272,7 @@ pyplot.show()
 rmse = sqrt(test_score)
 ```
 
-### Autoregression
+### Autoregression Forecast Model
 A regression model works on a model like y = b0 + b1 * x where y is the prediction, b0 and b1 are optimizing coefficients and x is input value. 
 
 
@@ -374,6 +374,17 @@ pyplot.plot(predictions, 'r--')
 pyplot.show()
 pyplot.savefig('AR-AutoTrain Plot')
 ```
+
+
+### ARIMA Forecast Model
+This is a combination of Autoregressive Model (AR) and differencing to remove trends and seasonality called integrated (I) and moving average model (MA).
+
+
+AR - Autoregression: Uses relationship between observation and its lag variable
+I - Integrated: Uses differencing of raw observation to make time series stationary
+MA - Moving Average: Uses dependency between observation  and residual error from moving average model applied to lagged observations
+
+p, d, q are the parameters used to define the ARIMA model where p is the number of lag observations called lag order, d is the number of times that the raw observations are differenced called differencing, q is the size of the moving average window called the order of moving average. The ARIMA model can be made to simple AR, I or MA model by just resetting the parameter to 0.
 
 
 
