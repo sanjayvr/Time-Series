@@ -387,6 +387,62 @@ MA - Moving Average: Uses dependency between observation  and residual error fro
 p, d, q are the parameters used to define the ARIMA model where p is the number of lag observations called lag order, d is the number of times that the raw observations are differenced called differencing, q is the size of the moving average window called the order of moving average. The ARIMA model can be made to simple AR, I or MA model by just resetting the parameter to 0.
 
 
+```python
+
+def arima_model(data_series, data_frame):
+    '''
+    df: values from data
+    train: training dataset
+    test: testing dataset
+    predictions: predicted values
+    model: Creating model for ARIMA
+    model_fit: Model fit on train data
+    :return: RMSE and ARIMA Plot
+    '''
+
+    # fit model using (p, d, q) paramters set for running the ARIMA model
+    df = data_series.values
+    size = int(len(df)*0.66)
+    train = df[1:size]
+    test = df[size:]
+    history = [x for x in train]
+    predictions = []
+    for t in range(len(test)):
+        model = ARIMA(history, order=(5,1,0))
+        model_fit = model.fit(disp=0)
+        output = model_fit.forecast()
+        yhat = output[0]
+        predictions.append(yhat)
+        obs = test[t]
+        history.append(obs)
+        # print(model_fit.summary())
+        print('predicted=%f, expected=%f' % (yhat,obs))
+    error = mean_squared_error(test, predictions)
+    rmse = math.sqrt(error)
+    print('Test RMSE: %.3f' % rmse)
+
+    # plot residual errors
+    residuals = DataFrame(model_fit.resid)
+    residuals.plot()
+    pyplot.show()
+    
+    # line plot - residual errors
+    pyplot.savefig('Fit Plot 1')
+    residuals.plot(kind='kde')
+    pyplot.show()
+    # density plot - residual errors
+    pyplot.savefig('Fit Plot 2')
+    # residual error distribution
+    print(residuals.describe())
+
+    # arima predictionplot
+    pyplot.plot(test)
+    pyplot.plot(predictions, 'r--')
+    pyplot.show()
+    pyplot.savefig('ARIMA Plot')
+
+
+
 
 
 
