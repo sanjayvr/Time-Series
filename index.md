@@ -381,7 +381,7 @@ This is a combination of Autoregressive Model (AR) and differencing to remove tr
 
 
 AR - Autoregression: Uses relationship between observation and its lag variable
-I - Integrated: Uses differencing of raw observation to make time series stationary
+I - Integrated: Uses differencing of raw observation at t and t+1 to make time series stationary
 MA - Moving Average: Uses dependency between observation  and residual error from moving average model applied to lagged observations
 
 p, d, q are the parameters used to define the ARIMA model where p is the number of lag observations called lag order, d is the number of times that the raw observations are differenced called differencing, q is the size of the moving average window called the order of moving average. The ARIMA model can be made to simple AR, I or MA model by just resetting the parameter to 0.
@@ -440,6 +440,28 @@ def arima_model(data_series, data_frame):
     pyplot.plot(predictions, 'r--')
     pyplot.show()
     pyplot.savefig('ARIMA Plot')
+```
+
+**Box - Jenkins Method:**
+
+The Box-Jenkins method is used to identify, estimate and check models for a time series dataset.
+
++ Identification - Use the data and related info to select a sub-class of model to summarize data.
++ Estimation - Use data to train the parameters of the model (coefficients)
++ Checking - Evaluate the fitted model with the data available and check for areas to improve the model
+
+
+*Identification* 
+
++ Assess whether dataset is stationary and if not how many differences are required to make it stationary.
+
+This can be done using any unit root test and here the chosen method is Augumented Dickey-Fuller Test. This can be used to determine how strongly a time series is defined by a trend. The ADF test uses an AR model and optimizes an information criterion across multiple different lag values. The null hypothesis(H0) made here is that the time series can be represented by a unit root that is not stationary. We rely on the p-value obtained from the test and if p-value is greater than 5% then the data has a unit root and is non-stationary.
+
+
+
++ Identify the parameters of an ARMA model
+
+
 
 
 
