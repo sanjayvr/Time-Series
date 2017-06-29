@@ -388,6 +388,7 @@ p, d, q are the parameters used to define the ARIMA model where p is the number 
 
 
 ```python
+import statsmodels.tsa.arima_model import ARIMA
 
 def arima_model(data_series, data_frame):
     '''
@@ -455,16 +456,23 @@ The Box-Jenkins method is used to identify, estimate and check models for a time
 
 + Assess whether dataset is stationary and if not how many differences are required to make it stationary.
 
-This can be done using any unit root test and here the chosen method is Augumented Dickey-Fuller Test. This can be used to determine how strongly a time series is defined by a trend. The ADF test uses an AR model and optimizes an information criterion across multiple different lag values. The null hypothesis(H0) made here is that the time series can be represented by a unit root that is not stationary. We rely on the p-value obtained from the test and if p-value is greater than 5% then the data has a unit root and is non-stationary.
+This can be done using any unit root test and here the chosen method is Augumented Dickey-Fuller Test. This can be used to determine how strongly a time series is defined by a trend. The ADF test uses an AR model and optimizes an information criterion across multiple different lag values. The null hypothesis(H0) made here is that the time series can be represented by a unit root that is not stationary. We rely on the p-value obtained from the test and if p-value is greater than 0.05 then the data has a unit root and is non-stationary. So we do differencing in order to make the dataset stationary.
 
 
++ Identify the parameters of an ARMA/ARIMA model
 
-+ Identify the parameters of an ARMA model
-
-
-
+To choose the p and q parameters of the ARMA or ARIMA model we use Autocorrelation Function (ACF) or Partial Autocorrelation Function (PACF).
 
 
+*Estimation* 
+This is mostly handled by the library and involves using numerical methods to minimize a loss or error term.
+
+
+*Diagnostic Checking*
+This step involves checking whether we have overfit the model and later check for residual errors. This can be obtained by creating ACF and PACF plots.
+
+
+---------------------------------------------------------------------------------------------------------------------------------------
 
 
 
