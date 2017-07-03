@@ -474,6 +474,126 @@ This step involves checking whether we have overfit the model and later check fo
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
+# Grid Search ARIMA Model
+
+It is observed that the p,d,q parameters are set using extensive analysis but an alternate approach is doing a grid search for a range of p,d,q values and finding the optimum values for the parameters
+
+```python
+import statsmodels.tsa.arima_model import ARIMA
+
+def grid_arima(data_series):
+    warnings.filterwarnings("ignore")
+    p_values = [0, 1, 2]
+    d_values = range(0, 3)
+    q_values = range(0, 3)
+    df = data_series.values
+    evaluate_models(df, p_values, d_values, q_values)
 
 
+def evaluate_models(df, p_values, d_values, q_values):
+    dataset = df.astype('float32')
+    best_score, best_cfg = float("inf"), None
+    for p in p_values:
+        for d in d_values:
+            for q in q_values:
+                order = (p,d,q)
+                try:
+                    mse = grid_arima_model(dataset, order)
+                    if mse < best_score:
+                        best_score, best_cfg = mse, order
+                    print('%s MSE=%.3f' % (order,mse))
+                except:
+                    continue
+    print('Best Combination of p,d,q is %s MSE=%.3f' % (best_cfg, best_score))
+
+
+def grid_arima_model(dataset, arima_order):
+
+    train_size = int(len(dataset) * 0.66)
+    train, test = dataset[0:train_size], dataset[train_size:]
+    history = [x for x in train]
+
+    predictions = list()
+    for t in range(len(test)):
+        model = ARIMA(history, order=arima_order)
+        model_fit = model.fit(disp=0)
+        yhat = model_fit.forecast()[0]
+        predictions.append(yhat)
+        history.append(test[t])
+
+    error = mean_squared_error(test, predictions)
+    error = math.sqrt(error)
+    return error
+```
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+
+# Time Series Forecasting with Long Short-Term Memory Network (LSTM)
+
+The LSTM Model requires the dataset to be transformed to supervised learning problem, stationary and scaled.
+
+
+**Tranform to Supervised Learning Problem**
+Firstly transforming to supervised learning problem i.e., the input for current observation is the output from its immediate previous observation.
+
+```python
+def to_supervised(data_series, data_frame):
+    dataframe_supervised = concat([data_frame.shift(1),data_frame], axis=1)
+    dataframe_supervised.fillna(0, inplace=True)
+    print(dataframe_supervised.head(5))
+```
+
+
+**Transform to Stationary**
+Apart from making problem to supervised model we make the time series stationary if there is a trend in the data. One of the standard methods of removing trend is by differencing the data and then inverting the process to take forecasts made on the differenced series back into their original scale.
+
+```python
+
+def differencing(data_series, interval=1):
+    diff = []
+    for i in range(interval, len(data_series)):
+        value = data_series[i] - data_series[i-interval]
+        diff.append(value)
+    return Series(diff)
+
+
+def inverse_difference(history, yhat, interval=1):
+    return yhat + history[-interval]
+
+
+def inverted_dataset(data_series, differenced_data):
+    inverted = []
+    for i in range(len(differenced_data)):
+        value = inverse_difference(data_series, differenced_data[i], le$
+        inverted.append(value)
+
+    inverted = Series(inverted)
+    return inverted
+```
+
+
+**Transform to Scale**
+Neural Netowrks expect data to be within scale of the activation function used by the network and the default activation function for LSTMs is the tanh function which gives values between -1 and 1. We transform the data to range of [-1,1] by using the MinMaxScaler class. 
+
+```python
+def scaled_dataset(data_series):
+    df = data_series.values
+    df = df.reshape(len(df),1)
+    scaler = MinMaxScaler(feature_range=(-1,1))
+    scaler = scaler.fit(df)
+    scaled_df = scaler.transform(df)
+    scaled_series = Series(scaled_df[:,0])
+    print(scaled_series.head())
+    inverted_df = scaler.inverse_transform(scaled_df)
+    inverted_scaled_series = Series(inverted_df[:,0])
+    print(inverted_scaled_series.head())
+
+    return scaled_data, invert_scaled
+```
+
+
+**LSTM Model Development**
+
+LSTM is a type of RNN and it can learn and remember over long sequences and doesn't rely on a specified window lagged observation.
 
