@@ -595,5 +595,15 @@ def scaled_dataset(data_series):
 
 **LSTM Model Development**
 
-LSTM is a type of RNN and it can learn and remember over long sequences and doesn't rely on a specified window lagged observation.
+LSTM is a type of RNN that can learn and remember over long sequences and doesn't rely on a specified window lagged observation. Keras is primarily used in this implementation of LSTM and is referred to as stateful mode. By default a LSTM layer in Keras maintains state between data within one batch and a batch is basically a fixed sized number of rows from training dataset that defines how many patterns are to be processed before updating the weights of the network. 
+
+LSTM Layer input format is [samples, timesteps, features]
+
++ Samples: These are the number of data points in our dataset
++ Time Steps: These are the number of time steps the network will store in its memory
++ Features: These are the number of features in your dataset
+
+
+
+
 
