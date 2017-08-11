@@ -3,6 +3,7 @@ import matplotlib
 import numpy
 import math
 import warnings
+import sys
 # Ignoring package warnings
 warnings.filterwarnings("ignore")
 from numpy import log
@@ -29,6 +30,10 @@ from pandas import datetime
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import LSTM
+from luminol.anomaly_detector import AnomalyDetector
+from luminol.modules.anomaly import Anomaly
+import time
+import datetime
 
 
 def load():
@@ -36,8 +41,8 @@ def load():
 	'''
 	This function is used to load the data file into series
 	and dataframe format
-	data: Dataset in Series Format
-	df: Dataset in Data Frame Format
+	:param data: Dataset in Series Format
+	:param df: Dataset in Data Frame Format
 	:return: Data in Series, Data in Frame Format
 	'''
 
@@ -45,11 +50,10 @@ def load():
 	data = Series.from_csv('testdata4.csv',header=0,parse_dates=[0],index_col=0)
 
 	# converting series to a data frame
-	values = data.values
+	values = DataFrame(data.values)
 	print('The dataset has been loaded')
 	print('\n')
 	# print(data.head(5))
-	# print(values.head(5))
 	return data, values
 
 
@@ -58,22 +62,23 @@ def to_supervised(data_frame):
 	'''
 	This function is used to convert to make it supervised model
 	where the output of datapoint 1 acts as input for datapoint 2
-	dataframe: it is the dataframe after concatenation
-	train: training dataset
-	test: testing dataset
-	train_x: train dataset from t-1 column
-	train_y: train dataset from t+1 column
-	test_x: test dataset from t-1 column
-	test_y: test dataset from t+1 column
-	:return: train of t-1 and t+1, test of t-1 and t+1 and concatenated df and train, test - 66/34%
+	:param dataframe: it is the dataframe after concatenation
+	:param train: training dataset
+	:param test: testing dataset
+	:param train_x: train dataset from t-1 column
+	:param train_y: train dataset from t column
+	:param test_x: test dataset from t-1 column
+	:param test_y: test dataset from t column
+	:return: train of t-1 and t, test of t-1 and t and concatenated df and train, test - 66/34%
 	'''
 
 	# concatenating the previous output and current output
 	dataframe_supervised = concat([data_frame.shift(1),data_frame], axis=1)
 	# setting input for first observation as 0 as there is no previous observation
 	dataframe_supervised.fillna(0, inplace=True)
-	print(dataframe_supervised.head(5))
-        print('\n')
+	# print('Converted dataframe from time series to supervised')
+	# print(dataframe_supervised.head(5))
+        # print('\n')
 
 	# splitting the data to test and train datasets although \
 	# training is not required
@@ -81,11 +86,11 @@ def to_supervised(data_frame):
 	train_split = int(len(total_data)*0.66)
 	train, test = total_data[1:train_split], total_data[train_split:]
 
-	# splitting training data based on column t-1 and t+1
+	# splitting training data based on column t-1 and t
 	train_x, train_y = train[:,0], train[:,1]
 	test_x, test_y = test[:,0], test[:,1]
 
-	return dataframe_supervised
+	return train_x, train_y, test_x, test_y, dataframe_supervised, train, test
 
 
 def differencing(data_series, interval=1):
@@ -93,7 +98,7 @@ def differencing(data_series, interval=1):
 	'''
 	This function is used to make dataset stationary by differencing
 	t and t-1 observation.
-	diff: list of differenced values
+	:param diff: list of differenced values
 	:return: stationary series
 	'''
 
@@ -140,9 +145,9 @@ def scaled_dataset(data_series):
 
         '''
         This function is used to scale the values for LSTM network to range [-1,1]
-        scaler: scaler model to scale the dataset
-        scaled_series: dataset scaled to [-1,1]
-        inverted_scaled_series: dataset reverted to original values
+        :param scaler: scaler model to scale the dataset
+        :param scaled_series: dataset scaled to [-1,1]
+        :param inverted_scaled_series: dataset reverted to original values
         :return: scaled dataset and inverted to original datset
         '''
 
@@ -169,9 +174,9 @@ def scaler_function(train,test):
 	'''
 	This is a helper function for scaling the input and is similar to
 	scaled_dataset function.
-	scaler: it is the scalar model
-	train_scaled: scaled train dataset
-	test_scaled: scaled test dataset
+	:param scaler: it is the scalar model
+	:param train_scaled: scaled train dataset
+	:param test_scaled: scaled test dataset
 	:return: scaled model and scaled train dataset and scaled test dataset
 	'''
 
@@ -212,7 +217,7 @@ def persistence_forecast(train_x, train_y, test_x, test_y):
 	'''
 	This function is used to get the baseline by showing the persistence plot for given dataset
 	by using the persistence model function below.
-	predictions: store the baseline predictions using persistence model
+	:param predictions: store the baseline predictions using persistence model
 	:return: Persistence Plot Figure
 	'''
 
@@ -222,7 +227,9 @@ def persistence_forecast(train_x, train_y, test_x, test_y):
 		yhat = persistence_model(i)
 		predictions.append(yhat)
 	test_score = mean_squared_error(test_y, predictions)
-	print('Test MSE: %.3f' % test_score)
+	rmse = math.sqrt(test_score)
+	print('The baseline model i.e., Persistence Model has been built')
+	print('Test RMSE: %.3f' % rmse)
 	print('\n')
 
 	# plotting predictions and expected results
@@ -284,22 +291,24 @@ def autoregression_autotrain(dataseries):
 	'''
 	The function is used build autoregression model but has the capability to utilize the historical data
 	to autotrain and give the predictions instead of retraining at every step.
-	data_values: values from data series
-	train: train dataset
-	test: test dataset
-	model: created model for AR
-	model_fit: trained model
-	window: optimal lag
-	coef: list of coefficients in the trained model
-	history:  history from the prior trained model
-	predictions: predictions made using the prior trained model {yhat = b0 + b1*x1 +..+ bn*xn}
+	:param data_values: values from data series
+	:param train: train dataset
+	:param test: test dataset
+	:param model: created model for AR
+	:param model_fit: trained model
+	:param window: optimal lag
+	:param coef: list of coefficients in the trained model
+	:param history:  history from the prior trained model
+	:param predictions: predictions made using the prior trained model {yhat = b0 + b1*x1 +..+ bn*xn}
 	:return: AR Plot and RMSE of the model
 	'''
 
 	data_values = dataseries.values
 
+	train_size = int(len(data_values)*0.66)
+
 	# splitting the dataset into train and test dataset
-	train, test = data_values[600:len(data_values)-300], data_values[len(data_values)-300:]
+	train, test = data_values[:train_size], data_values[train_size:]
 
 	model = AR(train)
 
@@ -325,7 +334,11 @@ def autoregression_autotrain(dataseries):
 	# RMSE used to measure the quality of model
 	error = mean_squared_error(test, predictions)
 	rmse = math.sqrt(error)
+	print('AutoRegression Model with Auto Train has been built')
 	print('Test RMSE: %.3f' % rmse)
+        mean_test = numpy.mean(test)
+        error_percent = ((rmse/mean_test)*(100))
+	print('Error Percentage: %.3f' % error_percent)
         print('\n')
 
 	pyplot.plot(test)
@@ -338,10 +351,10 @@ def autoregression_retrain(dataseries):
 
 	'''
 	data_values: values loaded from series format
-	train, test: train and test datasets
-	model: created model for AR
-	model_fit: trained model
-	predictions: predictions made from AR
+	:param train, test: train and test datasets
+	:param model: created model for AR
+	:param model_fit: trained model
+	:param predictions: predictions made from AR
 	:return: AR Plot and RMSE
 	'''
 
@@ -370,12 +383,12 @@ def arima_model(data_series, p, d, q):
 
 	'''
 	This function is the ARIMA model built for forecasting on the time series dataset.
-	df: values from data
-	train: training dataset
-	test: testing dataset
-	predictions: predicted values
-	model: Creating model for ARIMA
-	model_fit: Model fit on train data
+	:param df: values from data
+	:param train: training dataset
+	:param test: testing dataset
+	:param predictions: predicted values
+	:param model: Creating model for ARIMA
+	:param model_fit: Model fit on train data
 	:return: RMSE and ARIMA Plot
 	'''
 
@@ -462,10 +475,10 @@ def which_model(data_series):
 	elif model_type == 5:
 		print('The default p, d, q value set is 5,1,1')
 	        print('\n')
-		arima_model(data_series, 5, 1, 1)
+		arima_model(data_series, 10, 1, 0)
 
 	elif model_type == 6:
-		print('This model runs for p = (0,1,2,4,6,8,10) and d = (0,1) and q = (0,2) and finally gives the best combination of p,d,q values to build arima model')
+		print('This model runs for given range of p, d, q values and finally gives the best combination of p,d,q values to build arima model')
 		print('It also shows all the AR, MA, I, ARMA, ARIMA RMSE values')
 	        print('\n')
 		grid_arima(data_series)
@@ -535,13 +548,13 @@ def grid_arima(data_series):
 	warnings.filterwarnings("ignore")
 
 	# autoregression value (p)
-	p_values = [0, 1, 2]
+	p_values = [5, 6 ,7]
 
 	# differencing value (d)
-	d_values = range(0, 3)
+	d_values = range(0, 1)
 
 	# moving average value (q)
-	q_values = range(0, 3)
+	q_values = range(0, 1)
 	df = data_series.values
 
 	# evaluating different models by using all p,d,q values
@@ -648,6 +661,8 @@ def forecast_lstm(model, batch_size, X):
 	'''
 
 	X = X.reshape(1,1, len(X))
+
+	# forecast from the trained model
 	yhat = model.predict(X, batch_size=batch_size)
 	return yhat[0,0]
 
@@ -675,7 +690,7 @@ def lstm(data_series):
 	value_mean: mean of performance data used to normalize RMSE
 	diff_values: differenced values
 	supervised_values: changing time series to supervised
-	lstm_model: lstm model on which data is fit
+	:param lstm_model: lstm model on which data is fit
 	:return: Basic LSTM Model
 	'''
 
@@ -689,8 +704,8 @@ def lstm(data_series):
 	diff_values = differencing(df,1)
 
 	# converting time series to supervised
-	supervised = to_supervised(diff_values)
-	supervised_values = supervised.values
+	train_x, train_y, test_x, test_y, dataframe_supervised, train, test = to_supervised(diff_values)
+	supervised_values = dataframe_supervised.values
 
 	# train and test datasets
 	train_size = int(len(supervised_values)*0.85)
@@ -700,7 +715,7 @@ def lstm(data_series):
 	scaler, train_scaled, test_scaled = scaler_function(train, test)
 
 	# number of times experiment repeated to reduce randomness in result
-	repeats = 10
+	repeats = 2
 	error_scores = []
 
 	for r in range(repeats):
@@ -746,8 +761,8 @@ def lstm_two(data_series, data_frame):
 
 	'''
 	This is a stacked LSTM model with memory between batches.
-	scaler: scaled model for scaling data
-	model: sequential model for the lstm
+	:param scaler: scaled model for scaling data
+	:param model: sequential model for the lstm
 	:return: Stacked LSTM model with memory between batches for time series forecasting
 	'''
 
@@ -770,8 +785,8 @@ def lstm_two(data_series, data_frame):
 	train_size = int(len(df)*0.67)
 	train, test = df[0:train_size,:], df[train_size:len(df),:]
 
+	# mean value of test dataset to normalize RMSE
 	value_mean = numpy.mean(test_dataset)
-	print(value_mean)
 
 	# the number of timesteps to lookback
 	look_back = 10
@@ -787,6 +802,8 @@ def lstm_two(data_series, data_frame):
 
 	# sequential model for LSTM
 	model = Sequential()
+
+	# stacked LSTM
 	model.add(LSTM(4, batch_input_shape=(batch_size,look_back,1), stateful=True, return_sequences=True))
 	model.add(LSTM(4, batch_input_shape=(batch_size,look_back,1), stateful=True))
 	model.add(Dense(1))
@@ -794,9 +811,19 @@ def lstm_two(data_series, data_frame):
 	# using adam optimizer
 	model.compile(loss='mean_squared_error', optimizer='adam')
 
-	for i in range(300):
+
+	# epochs for LSTM
+	epochs = 10
+	print('The current LSTM model runs for ' + str(epochs) + ' epochs')
+	print('\n')
+	for i in range(epochs):
+		print('\t Running Epoch '+str(i+1)+'/'+str(epochs))
+		print('\t -------------------')
 		model.fit(train_X, train_Y, epochs = 1, batch_size=1, verbose=1, shuffle=False)
 		model.reset_states()
+		print('\n')
+
+	# score, accuracy = model.evaluate(test_X, test_Y, batch_size = batch_size)
 
 	# predictions made for train and test data
 	predict_train = model.predict(train_X, batch_size=batch_size)
@@ -813,6 +840,9 @@ def lstm_two(data_series, data_frame):
 	print('RMSE: %.3f' % (test_error))
 	print('Error Percent: %.3f' %(error_percent))
 
+	# print('Test Accuracy: %.3f' % (accuracy))
+	# print('Score: %.3f' % (score))
+
 	plot_train = numpy.empty_like(df)
         plot_train[:,:] = numpy.nan
         plot_train[look_back:len(predict_train)+look_back, :] = predict_train
@@ -828,10 +858,37 @@ def lstm_two(data_series, data_frame):
 	pyplot.savefig('LSTM2')
 
 
+def anomaly_detection():
+
+	detector = AnomalyDetector('m.csv')
+	anomalies = detector.get_anomalies()
+	score = detector.get_all_scores()
+	anomaly_list = []
+
+	for i in anomalies:
+		anomaly = (str(i))
+		anomaly = anomaly.split(' ')
+		epoch_time = anomaly[2]
+		time = datetime.datetime.utcfromtimestamp(float(epoch_time)/1000.)
+
+		format = "%Y-%m-%d %H:%M:%S"
+		anomaly_time = time.strftime(format)
+		print('Anomaly detected on ' +  anomaly_time)
+
+	'''
+	anom_score = []
+
+	for (timestamp,value) in score.iteritems():
+		t_str = time.strftime('%Y-%m-%d', time.localtime(timestamp))
+		anom_score.append([t_str, value])
+	# print(anom_score)
+	'''
+
 def plot(data_series):
 
 	'''
 	This function is used to plot the dataset in different styles
+	:return: Plots in different styles
 	'''
 
 	print('1 - Line Plot | 2 - Dot Plot | 3 - Histogram')
@@ -865,22 +922,24 @@ def main():
 
 	'''
 	Main Function
-	data_file: Input File stored in this variable
-	data_series: Data in Series Format
-	data_frame: Data in Frame Format
+	:param data_file: input File stored in this variable
+	:param data_series: data in series format
+	:param data_frame: data in frame format
+	:return: forecasting model
 	'''
 
 	# data_file = raw_input('Please enter the file name: ')
 	print('\n')
 	data_series, data_frame = load()
 	# plot(data_series)
-	# train_x, train_y, test_x, test_y, dataframe_supervised, train, test = to_supervised(data_series, data_frame)
+	# train_x, train_y, test_x, test_y, dataframe_supervised, train, test = to_supervised(data_frame)
 	# persistence_forecast(train_x, train_y, test_x, test_y)
 	# autocorrelation_check(data_series, dataframe_supervised)
 	# autoregression_autotrain(data_series)
 	# autoregression_retrain(data_series)
-	# which_arima_model(data_series)
-	# model(data_series)
+	# arima_model(data_series, 6, 1, 1)
+	# grid_arima(data_series)
+	# which_model(data_series)
 	# adf_test(data_series)
 	# acf(data_series)
 	# pacf(data_series)
@@ -889,6 +948,7 @@ def main():
 	# scaled_dataset(data_frame)
 	# lstm(data_series)
 	lstm_two(data_series,data_frame)
+	# anomaly_detection()
 	print('--Process Completed--')
 
 if __name__ == '__main__':
